@@ -31,16 +31,92 @@ class _DeleteMemoDialogState extends State<DeleteMemoDialog> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ElevatedButton(onPressed: () {
-                status.value = 'deleting-memo';
-              }, child: const Text('Delete')),
-
+              ElevatedButton(
+                  onPressed: () {
+                    status.value = 'deleting-memo';
+                  },
+                  child: const Text('Delete')),
               const SizedBox(width: 20),
-              ElevatedButton(onPressed: onPressed, child: const Te)
+              ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'))
             ],
-          )
+          ),
         ],
       ),
-    )
+    );
+  }
+
+  Widget deletingMemoWidget() {
+    return FutureBuilder(
+      future: Get.find<dependencies.AuthController>().deleteMemo(
+        widget.index,
+      ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Deleting memo'),
+                SizedBox(height: 20),
+                CircularProgressIndicator(),
+              ],
+            ),
+          );
+        } else if (snapshot.data == 'success') {
+          Future.delayed(
+            const Duration(seconds: 1),
+            () {
+              if (Get.find<dependencies.AuthController>().memos.isNotEmpty) {
+                widget.scrollToBottom();
+              }
+
+              Navigator.pop(context);
+            },
+          );
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Memo deleted successfully'),
+                SizedBox(height: 20),
+                CircularProgressIndicator(),
+              ],
+            ),
+          );
+        } else {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(snapshot.data!),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Close'))
+              ],
+            ),
+          );
+        }
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Obx(
+        () => status.value == 'delete-memo'
+            ? deleteMemoWidget()
+            : status.value == 'dedeting-memo'
+                ? deletingMemoWidget()
+                : const SizedBox(),
+      ),
+    );
   }
 }
